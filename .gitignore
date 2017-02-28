@@ -1,0 +1,7 @@
+# Training files
+*.json
+*.db
+*.mp3
+
+*.fuse*
+*/.idea/
