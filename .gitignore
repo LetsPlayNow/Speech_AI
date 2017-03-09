@@ -1,10 +1,7 @@
 # Training files
-*.json
 *.db
 *.mp3
 .idea/
-corpus/
-corpus_parser/
 
 # Temporary files
 *.*~
