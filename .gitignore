@@ -2,6 +2,9 @@
 *.json
 *.db
 *.mp3
+.idea/
+corpus/
+corpus_parser/
 
-*.fuse*
-*/.idea/
+# Temporary files
+*.*~
