@@ -33,7 +33,6 @@ class Speech_AI:
 
         self._mp3_name = "speech.mp3"
 
-
     def work(self):
         print("Минутку тишины, пожалуйста...")
         with self._microphone as source:
@@ -67,15 +66,13 @@ class Speech_AI:
             self._clean_up()
             print("Пока!")
 
-
     def say(self, phrase):
         tts = gTTS(text=phrase, lang="ru")
-        tts.save("speech.mp3")
+        tts.save(self._mp3_name)
 
         # Play answer
-        mixer.music.load('speech.mp3')
+        mixer.music.load(self._mp3_name)
         mixer.music.play()
-
 
     def make_answer(self, statement):
         return self.bot.get_response(statement)
