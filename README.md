@@ -25,6 +25,8 @@ You can use this idea in you video game or maybe with Smart House.
 Enjoy!
 
 ## Installation
+
+### Debian-based linux
 At first you need to install libraries, listed above.
 For this I recommend use of python environments (like conda environments)
 
@@ -45,8 +47,34 @@ pip3 install chatterbot
 pip3 install pygame
 ```
 
+### Windows
+On windows it's bit difficult to install pyaudio and pygame. So, easy way to use `Wheel`. 
+This package versions for Python 3.4.x, but you can download what you need
+
+1. Install Python 3.4.x standalone or in Anaconda
+2. Downaload wheels depending on your architecture (x86 or amd64) and Python version: 
+ - [pygame](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame)
+ - [pyaudio](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio)
+
+3. Install packages (install wheel if you haven't did it yet).
+```bash
+pip install --upgrade pip
+pip install wheel
+
+pip install pygame-1.9.3-cp34-cp34m-win32.whl
+pip install PyAudio‑0.2.11‑cp34‑cp34m‑win32.whl
+
+pip3 install gTTS
+pip3 install SpeechRecognition
+pip3 install chatterbot
+```
+
 ## Example
 ```
 python3 speech_ai.py
-
 ```
+or
+```
+python speech_ai.py
+```
+
