@@ -48,14 +48,14 @@ pip3 install pygame
 ```
 
 ### Windows XP and older
-In windows OS we have several methods to install packages:
+In Windows OS we have several methods to install packages:
 * We can install [compiler](https://wiki.python.org/moin/WindowsCompilers) suggested for our Python version
-* Or we can easily use `Wheel`
-On windows it's bit difficult to install pyaudio and pygame. So, easy way to use `Wheel`. 
+* Or we can easily use `Wheel`.  
+On windows it's bit difficult to install `pyaudio` and `pygame`. So, easy way to use `Wheel`. 
 This package versions for Python 3.4.x, but you can download versions what you need
 
 1. Install Python 3.4.x standalone or in Anaconda
-2. Downaload wheels depending on your architecture (x86 or amd64) and Python version: 
+2. Download wheels depending on your architecture (x86 or amd64) and Python version: 
  - [pygame](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame)
  - [pyaudio](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio)
 
@@ -65,7 +65,7 @@ pip install --upgrade pip
 pip install wheel
 
 pip install pygame-1.9.3-cp34-cp34m-win32.whl
-pip install PyAudio‑0.2.11‑cp34‑cp34m‑win32.whl
+pip install PyAudio-0.2.11-cp34-cp34m-win32.whl
 
 pip3 install gTTS
 pip3 install SpeechRecognition
