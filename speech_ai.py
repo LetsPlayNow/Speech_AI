@@ -22,6 +22,14 @@ class Speech_AI:
         self._microphone = sr.Microphone()
 
         self.bot = ChatBot(name="Robby",
+            logic_adapters=[{
+                                'import_path' : 'chatterbot.logic.BestMatch'
+                            },
+                            {
+                                'import_path': 'chatterbot.logic.LowConfidenceAdapter',
+                                'threshold': 0.65,
+                                'default_response': 'Простите, кажется я вас не понял'
+                            }],
             storage_adapter="chatterbot.storage.JsonFileStorageAdapter",
             filters=["chatterbot.filters.RepetitiveResponseFilter"],
             database="./database.json"
