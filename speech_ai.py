@@ -62,7 +62,7 @@ class Speech_AI:
                         answer = "Простите, вас плохо слышно"
                     else:
                         best_statement = self._choose_best_alternative(statement['alternative'])
-                        if best_statement['confidence'] < 0.6:
+                        if 'confidence' in best_statement and best_statement['confidence'] < 0.6:
                             answer = "Простите, вас плохо слышно"
                         else:
                             answer = self.make_answer(best_statement['transcript'])
