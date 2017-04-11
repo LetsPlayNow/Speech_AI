@@ -2,6 +2,12 @@
 import speech_recognition as sr
 from gtts import gTTS
 
+# TODO
+# Воспроизведение текстов
+# Распознавание и отправка команд
+# ROS node чтобы получать запросы от ноды распознавания препятствий и других интересностях
+# * отправка файлов роботу для воспроизведения
+
 # Воспроизведение речи
 import pygame
 from pygame import mixer
@@ -21,13 +27,15 @@ class Speech_AI:
         self._recognizer = sr.Recognizer()
         self._microphone = sr.Microphone()
 
+        self.google_threshold = 0.5
+        self.chatterbot_treshold = 0.45
         self.bot = ChatBot(name="Robby",
             logic_adapters=[{
                                 'import_path' : 'chatterbot.logic.BestMatch'
                             },
                             {
                                 'import_path': 'chatterbot.logic.LowConfidenceAdapter',
-                                'threshold': 0.45,
+                                'threshold': self.chatterbot_treshold,
                                 'default_response': 'Как интересно. А расскажешь еще что - нибудь?'
                             },
                             {
@@ -38,54 +46,65 @@ class Speech_AI:
             database="./database.json"
         )
 
-        self.bot.set_trainer(ChatterBotCorpusTrainer)
-        self.bot.train("corpus")
-        print("Обучение завершено")
+        self.train()
 
         self._mp3_name = "speech.mp3"
+
+
 
     def work(self):
         print("Минутку тишины, пожалуйста...")
         with self._microphone as source:
             self._recognizer.adjust_for_ambient_noise(source)
 
+        while True:
+            print("Скажи что - нибудь!")
+            with self._microphone as source:
+                audio = self._recognizer.listen(source)
+            print("Понял, идет распознавание...")
+            statement = self.recognize(audio)
+            print("Вы сказали: ", statement)
+            result = self.process_statement(statement)
+            print(self.bot.name, " ответил: ", statement)
+
+            self.say(str(result))
+
+    # recognize google can return
+    # [{'transcript' : 'asdad', 'confidence' : 0.5}, ...] or [{'transcript': 0.5},...] or empty array
+    # todo add timeout for request and better error escaping
+    def recognize(self, audio):
+        best_statement = None
         try:
-            while True:
-                print("Скажи что - нибудь!")
-                with self._microphone as source:
-                    audio = self._recognizer.listen(source)
-                print("Понял, идет распознавание...")
-                try:
-                    statement = self._recognizer.recognize_google(audio, language="ru_RU", show_all=True)
-                    no_answer = len(statement) is 0
-                    if no_answer:
-                        answer = "Простите, вас плохо слышно"
-                    else:
-                        best_statement = self._choose_best_alternative(statement['alternative'])
-                        if 'confidence' in best_statement and best_statement['confidence'] < 0.6:
-                            answer = "Простите, вас плохо слышно"
-                        else:
-                            answer = self.make_answer(best_statement['transcript'])
-                    # todo add timeout for request and better error escaping
-                    # Союда можно добавить много интересностей (IoT, CV, ...)
+            statements = self._recognizer.recognize_google(audio, language="ru_RU", show_all=True)
+            if len(statements) is not 0:
+                best_statement = self.choose_best_statement(statements)
+        except sr.UnknownValueError:
+            print("Упс! Кажется, я тебя не понял")
+        except sr.RequestError as e:
+            print("Не могу получить данные от сервиса Google Speech Recognition; {0}".format(e))
+        return best_statement
 
-                    self.say(str(answer))
-                    while pygame.mixer.music.get_busy():
-                        time.sleep(0.1)
+    def choose_best_statement(self, statements):
+        best_statement = None
+        max_confidence = 0
+        for alternative in statements:
+            if 'confidence' not in alternative:
+                alternative['confidence'] = 0.8
 
-                    print("Вы сказали: {}".format(statement))
-                    print("{} сказал: {}".format(self.bot.name, answer))
-                except sr.UnknownValueError:
-                    print("Упс! Кажется, я тебя не понял")
-                except sr.RequestError as e:
-                    print("Не могу получить данные от сервиса Google Speech Recognition; {0}".format(e))
-        except KeyboardInterrupt:
-            # Сохраняем данные для следующей сессии
-            # self.bot.trainer.export_for_training('corpus/last_session_corpus.json')
-            # self._clean_up()
-            print("Пока!")
+            if alternative['confidence'] > max_confidence:
+                max_confidence = alternative['confidence']
+                best_statement = alternative
+        return best_statement
+
+    # A lot of cool possibilities can be impemented here (IoT, CV, ...)
+    def process_statement(self, statement):
+        if statement is None or statement['confidence'] < self.google_threshold:
+            answer = "Простите, вас плохо слышно"
+        else:
+            answer = self.make_answer(statement['transcript'])
 
     def say(self, phrase):
+        # Synthesize answer
         tts = gTTS(text=phrase, lang="ru")
         tts.save(self._mp3_name)
 
@@ -93,24 +112,32 @@ class Speech_AI:
         mixer.music.load(self._mp3_name)
         mixer.music.play()
 
+        while pygame.mixer.music.get_busy():
+            time.sleep(0.1)
+
     def make_answer(self, statement):
         return self.bot.get_response(statement)
 
-    def _clean_up(self):
-        def clean_up():
-            os.remove(self._mp3_name)
+    # TODO if database exists we should not learn
+    def train(self):
+        self.bot.set_trainer(ChatterBotCorpusTrainer)
+        self.bot.train("corpus")
+        print("Обучение завершено")
 
-    def _choose_best_alternative(self, recognized_statements):
-        best_statement = None
-        max_confidence = 0
-        for alternative in recognized_statements:
-            if alternative['confidence'] > max_confidence:
-                max_confidence = alternative['confidence']
-                best_statement = alternative
-        return best_statement
+    def shutdown(self):
+        # self.bot.trainer.export_for_training('corpus/last_session_corpus.json')
+        # self._clean_up()
+        print("Пока!")
+
+    def clean_up(self):
+        os.remove(self._mp3_name)
+
 
 def main():
     ai = Speech_AI()
-    ai.work()
+    try:
+        ai.work()
+    except KeyboardInterrupt:
+        ai.shutdown()
 
 main()
