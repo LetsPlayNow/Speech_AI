@@ -27,8 +27,11 @@ class Speech_AI:
                             },
                             {
                                 'import_path': 'chatterbot.logic.LowConfidenceAdapter',
-                                'threshold': 0.3,
-                                'default_response': 'Простите, кажется я вас не понял'
+                                'threshold': 0.45,
+                                'default_response': 'Как интересно. А расскажешь еще что - нибудь?'
+                            },
+                            {
+                                'import_path': 'chatterbot.logic.MathematicalEvaluation'
                             }],
             storage_adapter="chatterbot.storage.JsonFileStorageAdapter",
             filters=["chatterbot.filters.RepetitiveResponseFilter"],
@@ -36,7 +39,7 @@ class Speech_AI:
         )
 
         self.bot.set_trainer(ChatterBotCorpusTrainer)
-        self.bot.train("corpus", "chatterbot.corpus.russian")
+        self.bot.train("corpus")
         print("Обучение завершено")
 
         self._mp3_name = "speech.mp3"
@@ -63,7 +66,7 @@ class Speech_AI:
                             answer = "Простите, вас плохо слышно"
                         else:
                             answer = self.make_answer(best_statement['transcript'])
-
+                    # todo add timeout for request and better error escaping
                     # Союда можно добавить много интересностей (IoT, CV, ...)
 
                     self.say(str(answer))
@@ -78,8 +81,8 @@ class Speech_AI:
                     print("Не могу получить данные от сервиса Google Speech Recognition; {0}".format(e))
         except KeyboardInterrupt:
             # Сохраняем данные для следующей сессии
-            self.bot.trainer.export_for_training('corpus/last_session_corpus.json')
-            self._clean_up()
+            # self.bot.trainer.export_for_training('corpus/last_session_corpus.json')
+            # self._clean_up()
             print("Пока!")
 
     def say(self, phrase):
