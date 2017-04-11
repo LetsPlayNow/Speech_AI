@@ -27,7 +27,7 @@ class Speech_AI:
                             },
                             {
                                 'import_path': 'chatterbot.logic.LowConfidenceAdapter',
-                                'threshold': 0.65,
+                                'threshold': 0.3,
                                 'default_response': 'Простите, кажется я вас не понял'
                             }],
             storage_adapter="chatterbot.storage.JsonFileStorageAdapter",
@@ -53,9 +53,17 @@ class Speech_AI:
                     audio = self._recognizer.listen(source)
                 print("Понял, идет распознавание...")
                 try:
-                    statement = self._recognizer.recognize_google(audio, language="ru_RU")
+                    statement = self._recognizer.recognize_google(audio, language="ru_RU", show_all=True)
+                    no_answer = len(statement) is 0
+                    if no_answer:
+                        answer = "Простите, вас плохо слышно"
+                    else:
+                        best_statement = self._choose_best_alternative(statement['alternative'])
+                        if best_statement['confidence'] < 0.6:
+                            answer = "Простите, вас плохо слышно"
+                        else:
+                            answer = self.make_answer(best_statement['transcript'])
 
-                    answer = self.make_answer(statement)
                     # Союда можно добавить много интересностей (IoT, CV, ...)
 
                     self.say(str(answer))
@@ -89,6 +97,14 @@ class Speech_AI:
         def clean_up():
             os.remove(self._mp3_name)
 
+    def _choose_best_alternative(self, recognized_statements):
+        best_statement = None
+        max_confidence = 0
+        for alternative in recognized_statements:
+            if alternative['confidence'] > max_confidence:
+                max_confidence = alternative['confidence']
+                best_statement = alternative
+        return best_statement
 
 def main():
     ai = Speech_AI()
