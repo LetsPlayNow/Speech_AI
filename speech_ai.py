@@ -14,6 +14,7 @@ from pygame import mixer
 mixer.init()
 
 import os
+import sys
 import time
 
 # Библиотека Chatterbot для простого лингвистического ИИ
@@ -27,8 +28,10 @@ class Speech_AI:
         self._recognizer = sr.Recognizer()
         self._microphone = sr.Microphone()
 
-        self.google_threshold = 0.5
-        self.chatterbot_treshold = 0.45
+        self.google_threshold = 0.5      # minimial allowed confidence in speech recognition
+        self.chatterbot_treshold = 0.45  # ---/--- in chatterbot
+
+        is_need_train = not self.is_db_exists()
         self.bot = ChatBot(name="Robby",
             logic_adapters=[{
                                 'import_path' : 'chatterbot.logic.BestMatch'
@@ -46,7 +49,9 @@ class Speech_AI:
             database="./database.json"
         )
 
-        self.train()
+        if is_need_train:
+            print("Производится обучение на corpus данных")
+            self.train()
 
         self._mp3_name = "speech.mp3"
 
@@ -65,11 +70,11 @@ class Speech_AI:
             statement = self.recognize(audio)
             print("Вы сказали: ", statement)
             result = self.process_statement(statement)
-            print(self.bot.name, " ответил: ", statement)
+            print(self.bot.name, " ответил: ", result)
 
             self.say(str(result))
 
-    # recognize google can return
+    # recognize google can return if show_all is True
     # [{'transcript' : 'asdad', 'confidence' : 0.5}, ...] or [{'transcript': 0.5},...] or empty array
     # todo add timeout for request and better error escaping
     def recognize(self, audio):
@@ -77,19 +82,20 @@ class Speech_AI:
         try:
             statements = self._recognizer.recognize_google(audio, language="ru_RU", show_all=True)
             if len(statements) is not 0:
-                best_statement = self.choose_best_statement(statements)
+                best_statement = self.choose_best_statement(statements['alternative'])
         except sr.UnknownValueError:
             print("Упс! Кажется, я тебя не понял")
         except sr.RequestError as e:
             print("Не могу получить данные от сервиса Google Speech Recognition; {0}".format(e))
         return best_statement
 
+    # choose best statement from full recognition answer from recognize() method
     def choose_best_statement(self, statements):
         best_statement = None
         max_confidence = 0
         for alternative in statements:
             if 'confidence' not in alternative:
-                alternative['confidence'] = 0.8
+                alternative['confidence'] = 0.7
 
             if alternative['confidence'] > max_confidence:
                 max_confidence = alternative['confidence']
@@ -97,12 +103,15 @@ class Speech_AI:
         return best_statement
 
     # A lot of cool possibilities can be impemented here (IoT, CV, ...)
+    # statement: {'confidence' : 0.5, 'transcript' : 'Где мои печеньки?'}
     def process_statement(self, statement):
         if statement is None or statement['confidence'] < self.google_threshold:
             answer = "Простите, вас плохо слышно"
         else:
             answer = self.make_answer(statement['transcript'])
+        return answer
 
+    # Get synthesized mp3 and play it with pygame
     def say(self, phrase):
         # Synthesize answer
         tts = gTTS(text=phrase, lang="ru")
@@ -118,19 +127,27 @@ class Speech_AI:
     def make_answer(self, statement):
         return self.bot.get_response(statement)
 
-    # TODO if database exists we should not learn
+    # train chatterbot with our corpus (all files if ./corpus folder)
     def train(self):
         self.bot.set_trainer(ChatterBotCorpusTrainer)
         self.bot.train("corpus")
         print("Обучение завершено")
 
-    def shutdown(self):
-        # self.bot.trainer.export_for_training('corpus/last_session_corpus.json')
+    # keyboard exception handler
+    def shutdown(self, export=False):
+        if export:
+            self.bot.trainer.export_for_training('corpus/last_session_corpus.json')
+
         # self._clean_up()
-        print("Пока!")
+        self.say("Пока!") # slightly slows shutdown
 
     def clean_up(self):
         os.remove(self._mp3_name)
+
+    # if we have db already we don't need to train bot again
+    def is_db_exists(self):
+        db_path = os.getcwd() + '/database.json'
+        return os.path.isfile(db_path)
 
 
 def main():
