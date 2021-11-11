@@ -3,15 +3,11 @@
 
 ## Simple speech linguistic AI with Python
 
-It supports almost any natural language. By default it works in russian language.
-if you want to change it, please check documentation of libraries below.
-It can be done easily in 3 fixes:
-* Change comments
-* Change language of recognizer and synthesizer and train bot with your language sources (corpus, Twitter, etc.).
+It supports any natural language (Russian by default).
+To change the language, change the settings of recognizer and synthesizer and retrain bot with your language sources (corpus, Twitter, etc.).
 
-Main script is speech_ai.
-It recognizes your speech, looking for answer by chatterbot library and replies you with speech synthesized by GTTS library.
-Because of Libraries specials, it needs internet connection.
+Main script is speech_ai. It requires internet connection to run.
+It recognizes your speech, looks for an answer using chatterbot library and replies you with a speech synthesized by GTTS library.
 
 This script uses:
 * Python 3
@@ -21,15 +17,12 @@ This script uses:
 * [PyGame](https://www.pygame.org/lofi.html)
 
 
-You can use this idea in you video game or maybe with Smart House.  
+You can use this idea in you video game or Smart House project.  
 Enjoy!
 
 ## Installation
 
 ### Debian-based linux
-At first you need to install libraries, listed above.
-For this I recommend use of python environments (like conda environments)
-
 
 ```Bash
 conda create --name speech_ai
